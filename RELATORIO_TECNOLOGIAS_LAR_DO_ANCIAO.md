@@ -1,4 +1,4 @@
-# Relatório de Tecnologias e Arquitetura — Lar do Ancião
+# Relatório de Tecnologias e Arquitetura — Lar do Ancião (*REQUER REVISÃO ANTES DE INICIAR A PRODUÇÃO*)
 
 ## 3. MAPA DAS TECNOLOGIAS SELECIONADAS E JUSTIFICATIVAS
 
