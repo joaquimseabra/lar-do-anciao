@@ -1,6 +1,6 @@
-# Relatório de Tecnologias e Arquitetura — Lar do Ancião
-
 ## 3. MAPA DAS TECNOLOGIAS SELECIONADAS E JUSTIFICATIVAS
+
+* **Protótipo Interativo no Figma:** [Acessar Design do Lar do Ancião](https://www.figma.com/make/5Q43ahkSNsRj3jIi2yZ6yY/Lar-do-anci%C3%A3o?code-node-id=0-6&p=f&fullscreen=1)
 
 Para atender à orientação do professor de criar um aplicativo Android na **Google Play Store** em **Vue.js**, e alinhando-se à necessidade real do asilo de **controle visual da rotina sem fadiga de notificações sonoras constantes**, a pilha tecnológica (*tech stack*) de custo zero foi refinada:
 
