@@ -24,12 +24,12 @@
 ### 🔐 FASE 1: Autenticação Real (Login, Senha e Perfis)
 *Acesso seguro para diferenciar o Administrador (que cadastra e altera prescrições) das Cuidadoras (que confirmam as doses no plantão).*
 
-- [ ] **1.1. Tela de Login (`LoginView.vue`):**
-  - [ ] Formulário com campos de **E-mail institucional** e **Senha**.
-  - [ ] Validação visual de campos (e-mail válido, senha mínima de 6 caracteres).
-  - [ ] Opção de *"Lembrar meu acesso"* para não deslogar a cuidadora entre turnos.
-  - [ ] Feedback amigável para erros do Firebase (ex: "Senha incorreta", "E-mail não cadastrado", "Muitas tentativas").
-  - [ ] Botão *"Esqueci minha senha"* com envio de e-mail de recuperação (`sendPasswordResetEmail`).
+- [x] **1.1. Tela de Login (`LoginView.vue`):** *(pronta em modo local via `authService.js`; falta só plugar o Firebase em 1.2)*
+  - [x] Formulário com campos de **E-mail institucional** e **Senha**.
+  - [x] Validação visual de campos (e-mail válido, senha mínima de 6 caracteres).
+  - [x] Opção de *"Lembrar meu acesso"* para não deslogar a cuidadora entre turnos.
+  - [x] Feedback amigável para erros do Firebase (ex: "Senha incorreta", "E-mail não cadastrado", "Muitas tentativas").
+  - [ ] Botão *"Esqueci minha senha"* com envio de e-mail de recuperação (`sendPasswordResetEmail`). *(botão pronto; envio real depende do Firebase)*
 
 - [ ] **1.2. Integração com Firebase Authentication:**
   - [ ] Configurar provedor de autenticação por **E-mail/Senha** no Console do Firebase.
@@ -47,7 +47,7 @@
 
 - [ ] **1.4. Proteção de Rotas no Vue Router (`router/index.js`):**
   - [ ] Adicionar `meta: { requiresAuth: true, requiredRole: 'admin' }` nas rotas.
-  - [ ] Interceptor `router.beforeEach` para redirecionar usuários não logados automaticamente para `/login`.
+  - [x] Interceptor `router.beforeEach` para redirecionar usuários não logados automaticamente para `/login`.
 
 ---
 

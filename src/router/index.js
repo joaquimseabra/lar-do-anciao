@@ -4,8 +4,16 @@ import ResidentsView from '@/views/ResidentsView.vue'
 import AddMedicationView from '@/views/AddMedicationView.vue'
 import HistoryView from '@/views/HistoryView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import LoginView from '@/views/LoginView.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 const routes = [
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginView,
+    meta: { title: 'Entrar', public: true, hideChrome: true }
+  },
   {
     path: '/',
     name: 'dashboard',
@@ -47,6 +55,18 @@ const router = createRouter({
   routes,
   scrollBehavior() {
     return { top: 0 }
+  }
+})
+
+// Redireciona quem não está logado para /login (e quem já está logado para fora dela)
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  if (!to.meta.public && !auth.isAuthenticated) {
+    return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : {} }
+  }
+  if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'dashboard' }
   }
 })
 

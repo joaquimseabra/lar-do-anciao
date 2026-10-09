@@ -2,7 +2,10 @@
 import { computed } from 'vue'
 import { useMedicationStore, AVAILABLE_CAREGIVERS } from '@/stores/medicationStore'
 import { isConfigured } from '@/services/firebase'
-import { 
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import {
+  LogOut,
   UserCircle, 
   ShieldCheck, 
   Cloud, 
@@ -17,6 +20,13 @@ import {
 } from 'lucide-vue-next'
 
 const store = useMedicationStore()
+const auth = useAuthStore()
+const router = useRouter()
+
+const handleLogout = async () => {
+  await auth.logout()
+  router.replace('/login')
+}
 
 const handleCaregiverChange = (caregiver) => {
   store.setCurrentCaregiver(caregiver)
@@ -111,5 +121,15 @@ const handleResetDemo = () => {
         </button>
       </div>
     </div>
+
+    <!-- Sessão -->
+    <button
+      type="button"
+      @click="handleLogout"
+      class="w-full py-2.5 px-3 bg-white hover:bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+    >
+      <LogOut class="w-3.5 h-3.5" />
+      <span>Sair ({{ auth.user?.email }})</span>
+    </button>
   </div>
 </template>
