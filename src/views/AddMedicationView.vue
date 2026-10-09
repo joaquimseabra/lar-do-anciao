@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMedicationStore } from '@/stores/medicationStore'
 import { capturePhoto, recognizeMedication } from '@/services/ocrService'
+import { compressImage, formatBytes } from '@/services/imageService'
 import { 
   Camera, 
   Upload, 
@@ -38,6 +39,7 @@ const ocrRawResult = ref(null)
 const newScheduleTime = ref('14:00')
 const fileInputRef = ref(null)
 const successSaved = ref(false)
+const photoSizeInfo = ref('')
 
 // Horários predefinidos para facilitar a rotina
 const schedulePresets = [
@@ -67,13 +69,28 @@ const handleCameraCapture = async () => {
   try {
     const photoBase64 = await capturePhoto()
     if (photoBase64) {
-      form.value.photoUrl = photoBase64
-      await processImageWithOcr(photoBase64)
+      await handleNewPhoto(photoBase64)
     }
   } catch (error) {
     // Se falhar a câmera nativa (ex: rodando no navegador do PC), aciona o input file
     triggerFileInput()
   }
+}
+
+// Salva a versão comprimida da foto; o OCR lê a original, em resolução total
+const handleNewPhoto = async (source) => {
+  try {
+    const { dataUrl, bytes, originalBytes } = await compressImage(source)
+    form.value.photoUrl = dataUrl
+    photoSizeInfo.value = originalBytes
+      ? `Foto otimizada: ${formatBytes(originalBytes)} → ${formatBytes(bytes)}`
+      : `Foto otimizada: ${formatBytes(bytes)}`
+  } catch (err) {
+    console.error('Falha ao comprimir a foto:', err)
+    alert('Não foi possível processar esta imagem. Tente outra foto.')
+    return
+  }
+  await processImageWithOcr(source)
 }
 
 const triggerFileInput = () => {
@@ -84,15 +101,11 @@ const triggerFileInput = () => {
 
 const handleFileUpload = async (event) => {
   const file = event.target.files?.[0]
+  // Permite escolher o mesmo arquivo de novo depois
+  event.target.value = ''
   if (!file) return
 
-  const reader = new FileReader()
-  reader.onload = async (e) => {
-    const dataUrl = e.target.result
-    form.value.photoUrl = dataUrl
-    await processImageWithOcr(dataUrl)
-  }
-  reader.readAsDataURL(file)
+  await handleNewPhoto(file)
 }
 
 // Processa a imagem com Tesseract OCR e regex
@@ -125,6 +138,7 @@ const processImageWithOcr = async (imageSource) => {
 
 // Amostra de simulação rápida para testes na demonstração
 const simulateSampleOcr = (type) => {
+  photoSizeInfo.value = ''
   if (type === 'losartana') {
     form.value.photoUrl = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80'
     form.value.name = 'Losartana Potássica'
@@ -226,6 +240,9 @@ const handleSubmit = async () => {
           <span class="text-xs font-semibold">Lendo texto da embalagem... {{ ocrProgress }}%</span>
         </div>
       </div>
+      <p v-if="form.photoUrl && photoSizeInfo" class="text-[10px] text-slate-400 text-center -mt-1.5">
+        {{ photoSizeInfo }}
+      </p>
 
       <!-- Botão Tirar Foto e Galeria -->
       <div class="space-y-1.5">

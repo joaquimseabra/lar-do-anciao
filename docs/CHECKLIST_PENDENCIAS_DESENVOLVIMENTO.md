@@ -87,7 +87,7 @@
   - [ ] Ativar o **Firebase Storage** no console do Firebase.
   - [ ] Regras de acesso (`storage.rules`) permitindo upload apenas por usuários autenticados.
 - [ ] **3.2. Serviço de Upload (`storageService.js`):**
-  - [ ] Função para comprimir a foto antes do envio (reduzir para ~150KB para economizar dados móveis).
+  - [x] Função para comprimir a foto antes do envio (reduzir para ~150KB para economizar dados móveis). *(`imageService.js` → `compressImage`)*
   - [ ] Upload da imagem para `medicamentos/{id_remedio}.jpg` e `idosos/{id_idoso}.jpg`.
   - [ ] Gravação da URL pública gerada no documento correspondente do Firestore.
 
