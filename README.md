@@ -1,5 +1,8 @@
 # Lar do Ancião — Sistema Mobile de Controle Visual de Medicamentos
 
+
+**Teste do comando para sincronizar as alterações no github**
+
 Aplicativo mobile oficial para o **Lar do Ancião** voltado para a Google Play Store, desenvolvido com foco estrito em **CONTROLE VISUAL DA MEDICAÇÃO** por cuidadores e administração.
 
 ---
