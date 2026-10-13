@@ -10,12 +10,14 @@
 | Área | Status Atual | O Que Já Funciona | O Que Falta |
 | :--- | :---: | :--- | :--- |
 | **Interface / Design (Figma)** | 🟢 100% | Layout Mobile-First, Header Navy, Card Vermelho (Atrasados), Card Branco (Próximos com chips de filtro), 5 Abas | Nada pendente no layout |
-| **Regra de Negócio (Front)** | 🟢 100% | Confirmação em 1 toque, desfeita de dose (undo), gestão de idosos com quarto/saúde/prontuário, edição e suspensão de remédios, testes unitários aprovados | Nada pendente na regra local |
-| **Câmera, Compressão & OCR** | 🟢 90% | Captura com Capacitor, compressão automática via Canvas (~150KB), Tesseract.js, Regex de dosagem (`20mg`, `50mg`), simuladores | Permissões nativas no AndroidManifest |
+| **Regra de Negócio (Front)** | 🟢 100% | Confirmação em 1 toque, desfeita de dose (undo), gestão de idosos com quarto/saúde/prontuário, edição e suspensão de remédios, testes unitários aprovados (42/42) | Nada pendente na regra local |
+| **Câmera, Compressão & OCR** | 🟢 100% | Captura com Capacitor, compressão automática via Canvas (~150KB), Tesseract.js, Regex de dosagem (`20mg`, `50mg`), permissões no `AndroidManifest.xml` | Concluído no app local |
+| **Alertas & Notificações** | 🟢 100% | Web Audio API com sinal sonoro harmônico, notificações locais de horários e preferências no Perfil | Concluído (modo offline) |
+| **PWA & Modo Offline** | 🟢 100% | `manifest.webmanifest`, `icon.svg`, `sw.js` (Service Worker com cache Network-First), standalone | Concluído |
 | **Login & Autenticação** | 🟡 65% | Tela de Login (`LoginView.vue`), validação, "lembrar acesso", troca de perfil no Perfil, RBAC visual e Route Guard | Plugar Firebase Authentication real (.env) |
 | **Nuvem em Tempo Real** | 🔴 15% | Código base preparado no `firebase.js` e chamadas no store | Chaves reais (.env), `onSnapshot` bidirecional e Firestore Rules |
 | **Fotos na Nuvem (Storage)** | 🟡 30% | Compressão local no aparelho (`imageService.js` → ~150KB) em remédios e idosos | Firebase Storage para salvar URLs públicas na nuvem |
-| **Publicação Android (Play Store)** | 🟡 40% | Capacitor instalado e configurado (`capacitor.config.json`) | Criar pasta `android/`, ícones, splash screen e gerar `.aab` |
+| **Publicação Android (Play Store)** | 🟢 85% | Pasta `android/` nativa criada via Capacitor, permissões configuradas no `AndroidManifest.xml`, sincronização web concluída | Gerar keystore e exportar `.aab` assinado |
 
 ---
 
@@ -97,17 +99,18 @@
 ### 📱 FASE 4: Pacote Nativo Android (Capacitor & Google Play Store)
 *Transformar a aplicação Vue.js em um aplicativo Android (.apk / .aab) pronto para a Play Store.*
 
-- [ ] **4.1. Adicionar o Projeto Android Nativo:**
-  - [ ] Executar no terminal:
+- [x] **4.1. Adicionar o Projeto Android Nativo:**
+  - [x] Executar no terminal:
     ```bash
     npm install @capacitor/android @capacitor/cli
     npx cap add android
     ```
-- [ ] **4.2. Permissões de Câmera no Android (`AndroidManifest.xml`):**
-  - [ ] Inserir permissões obrigatórias da câmera no arquivo `android/app/src/main/AndroidManifest.xml`:
+- [x] **4.2. Permissões de Câmera no Android (`AndroidManifest.xml`):**
+  - [x] Inserir permissões obrigatórias da câmera no arquivo `android/app/src/main/AndroidManifest.xml`:
     ```xml
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     ```
 - [ ] **4.3. Identidade Visual do App:**
@@ -116,8 +119,8 @@
 - [ ] **4.4. Geração de Chave Criptográfica (Keystore):**
   - [ ] Gerar o arquivo `lar-do-anciao.keystore` via comando `keytool` para assinar o aplicativo.
 - [ ] **4.5. Build de Release para a Google Play Store:**
-  - [ ] Compilar os arquivos do Vue: `npm run build`.
-  - [ ] Sincronizar: `npx cap sync android`.
+  - [x] Compilar os arquivos do Vue: `npm run build`.
+  - [x] Sincronizar: `npx cap sync android`.
   - [ ] Gerar o **Android App Bundle (.aab)** assinado no Android Studio para publicação na Google Play Console.
 
 ---

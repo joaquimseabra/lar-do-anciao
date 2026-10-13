@@ -4,6 +4,7 @@ import { useMedicationStore, AVAILABLE_CAREGIVERS } from '@/stores/medicationSto
 import { isConfigured } from '@/services/firebase'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { ref } from 'vue'
 import {
   LogOut,
   UserCircle, 
@@ -16,12 +17,54 @@ import {
   CheckCircle2, 
   Info,
   ExternalLink,
-  Users
+  Users,
+  Bell,
+  BellOff,
+  Volume2,
+  VolumeX,
+  Sparkles
 } from 'lucide-vue-next'
+import { 
+  isSoundEnabled, 
+  setSoundEnabled, 
+  isNotificationEnabled, 
+  setNotificationEnabled, 
+  requestNotificationPermission, 
+  playAlertBeep,
+  sendLocalNotification
+} from '@/services/notificationService'
 
 const store = useMedicationStore()
 const auth = useAuthStore()
 const router = useRouter()
+
+const soundActive = ref(isSoundEnabled())
+const notifActive = ref(isNotificationEnabled())
+
+const toggleSound = () => {
+  soundActive.value = !soundActive.value
+  setSoundEnabled(soundActive.value)
+  if (soundActive.value) {
+    playAlertBeep()
+  }
+}
+
+const toggleNotification = async () => {
+  if (!notifActive.value) {
+    const res = await requestNotificationPermission()
+    if (res === 'granted') {
+      notifActive.value = true
+      sendLocalNotification('Lar do Ancião', 'Notificações de plantão ativadas com sucesso!')
+    } else if (res === 'unsupported') {
+      alert('Notificações não são suportadas neste navegador.')
+    } else {
+      alert('Permissão de notificação foi negada pelo navegador.')
+    }
+  } else {
+    notifActive.value = false
+    setNotificationEnabled(false)
+  }
+}
 
 const handleLogout = async () => {
   await auth.logout()
@@ -96,6 +139,65 @@ const handleResetDemo = () => {
             <CheckCircle2 class="w-4 h-4" />
           </span>
         </button>
+      </div>
+    </div>
+
+    <!-- Alertas Sonoros & Notificações Locais (Plantão) -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+          <Bell class="w-3.5 h-3.5 text-navy-800" />
+          <span>Alertas do Plantão (100% Offline)</span>
+        </h3>
+        <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 font-semibold px-2 py-0.5 rounded-full">
+          Sem servidor
+        </span>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <!-- Sinal Sonoro -->
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+          <div class="flex items-center gap-2">
+            <component :is="soundActive ? Volume2 : VolumeX" class="w-4 h-4 text-slate-600" />
+            <div>
+              <p class="text-xs font-bold text-slate-800">Sinal Sonoro de Remédio</p>
+              <p class="text-[10px] text-slate-500">Toca um alerta agradável nas doses</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="toggleSound"
+            :class="soundActive ? 'bg-emerald-600' : 'bg-slate-300'"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+          >
+            <span
+              :class="soundActive ? 'translate-x-4' : 'translate-x-0'"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+            />
+          </button>
+        </div>
+
+        <!-- Notificação Local -->
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+          <div class="flex items-center gap-2">
+            <component :is="notifActive ? Bell : BellOff" class="w-4 h-4 text-slate-600" />
+            <div>
+              <p class="text-xs font-bold text-slate-800">Notificações no Dispositivo</p>
+              <p class="text-[10px] text-slate-500">Avisa na tela quando vencer o horário</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="toggleNotification"
+            :class="notifActive ? 'bg-emerald-600' : 'bg-slate-300'"
+            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+          >
+            <span
+              :class="notifActive ? 'translate-x-4' : 'translate-x-0'"
+              class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+            />
+          </button>
+        </div>
       </div>
     </div>
 

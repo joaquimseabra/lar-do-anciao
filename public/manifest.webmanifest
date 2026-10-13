@@ -1,0 +1,20 @@
+{
+  "name": "Lar do Ancião — Controle de Medicamentos",
+  "short_name": "Lar do Ancião",
+  "description": "Sistema de gestão e auditoria de administração de medicamentos para instituições de longa permanência de idosos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "categories": ["medical", "health", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

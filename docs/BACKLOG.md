@@ -109,20 +109,21 @@ As pendências restantes estão divididas em **Nuvem (Firebase)** e **Publicaç�
 ### 📱 4. Publicação Nativa Android (Capacitor & Play Store)
 *Objetivo: Gerar o aplicativo instalável (.apk / .aab) para a Google Play Store.*
 
-- [ ] **4.1. Adicionar o Projeto Nativo:**
-  - [ ] Instalar dependências nativas: `npm install @capacitor/android @capacitor/cli`.
-  - [ ] Gerar pasta do Android: `npx cap add android`.
-- [ ] **4.2. Permissões de Câmera (`AndroidManifest.xml`):**
-  - [ ] Inserir permissões da câmera e leitura de arquivos em `android/app/src/main/AndroidManifest.xml`:
+- [x] **4.1. Adicionar o Projeto Nativo:**
+  - [x] Instalar dependências nativas: `npm install @capacitor/android @capacitor/cli`.
+  - [x] Gerar pasta do Android: `npx cap add android`.
+- [x] **4.2. Permissões de Câmera (`AndroidManifest.xml`):**
+  - [x] Inserir permissões da câmera e leitura de arquivos em `android/app/src/main/AndroidManifest.xml`:
     - `<uses-permission android:name="android.permission.CAMERA" />`
     - `<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />`
+    - `<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />`
 - [ ] **4.3. Identidade Visual do App:**
   - [ ] Gerar os ícones adaptativos do aplicativo para Android em `res/mipmap`.
   - [ ] Configurar a tela de Splash Screen com o logotipo oficial do Lar do Ancião.
 - [ ] **4.4. Chave Criptográfica (Keystore):**
   - [ ] Gerar o arquivo de assinatura `lar-do-anciao.keystore` via comando `keytool`.
 - [ ] **4.5. Compilação e Geração do Pacote:**
-  - [ ] Sincronizar os arquivos: `npm run build && npx cap sync android`.
+  - [x] Sincronizar os arquivos: `npm run build && npx cap sync android`.
   - [ ] Gerar o **Android App Bundle (.aab)** assinado no Android Studio para submissão na Google Play Console.
 
 ---

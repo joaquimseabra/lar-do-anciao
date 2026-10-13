@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { db, isConfigured, collection, addDoc, onSnapshot, serverTimestamp } from '../services/firebase.js'
+import { playAlertBeep } from '../services/notificationService.js'
 
 const LOCAL_STORAGE_KEY = 'lar_do_anciao_state_v3'
 
@@ -445,6 +446,7 @@ export const useMedicationStore = defineStore('medicationStore', {
 
       this.administrations.unshift(newAdminRecord)
       this.saveToStorage()
+      playAlertBeep()
 
       // Se Firebase estiver configurado, salvar na nuvem
       if (isConfigured && db) {

@@ -191,12 +191,32 @@ assert(authStore.isAdmin === false, `Cuidadora Maria Oliveira possui papel não-
 authStore.switchCaregiver('cg-4') // Dra. Beatriz Lins (Admin)
 assert(authStore.isAdmin === true, `Dra. Beatriz Lins possui papel de administrador (isAdmin = true)`)
 
-console.log(`\n========================================`)
-console.log(`RESULTADO: ${passedTests} de ${totalTests} testes passaram com sucesso!`)
-console.log(`========================================\n`)
+console.log('\n--- 6. TESTES DE NOTIFICAÇÕES LOCAIS E SINAIS SONOROS (OFFLINE) ---')
+import('./src/services/notificationService.js').then(({ isSoundEnabled, setSoundEnabled, isNotificationEnabled, setNotificationEnabled, playAlertBeep }) => {
+  assert(typeof isSoundEnabled() === 'boolean', `isSoundEnabled retorna estado booleano`)
+  setSoundEnabled(false)
+  assert(isSoundEnabled() === false, `setSoundEnabled altera preferência para false`)
+  setSoundEnabled(true)
+  assert(isSoundEnabled() === true, `setSoundEnabled restaura preferência para true`)
+  
+  assert(typeof isNotificationEnabled() === 'boolean', `isNotificationEnabled retorna estado booleano`)
+  
+  // Teste de chamada sem exceção em ambiente headless
+  let errorCaught = false
+  try {
+    playAlertBeep()
+  } catch (e) {
+    errorCaught = true
+  }
+  assert(!errorCaught, `playAlertBeep executa de forma segura sem lançar exceções`)
 
-if (passedTests === totalTests) {
-  process.exit(0)
-} else {
-  process.exit(1)
-}
+  console.log(`\n========================================`)
+  console.log(`RESULTADO: ${passedTests} de ${totalTests} testes passaram com sucesso!`)
+  console.log(`========================================\n`)
+
+  if (passedTests === totalTests) {
+    process.exit(0)
+  } else {
+    process.exit(1)
+  }
+})

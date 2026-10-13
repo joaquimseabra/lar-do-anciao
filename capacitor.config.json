@@ -2,7 +2,6 @@
   "appId": "com.lardoanciao.app",
   "appName": "Lar do Ancião",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   },

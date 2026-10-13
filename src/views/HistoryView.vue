@@ -16,18 +16,52 @@ import {
 
 const store = useMedicationStore()
 const filterQuery = ref('')
+const selectedResidentFilter = ref('')
+const selectedShiftFilter = ref('all') // 'all', 'morning', 'afternoon', 'night'
 
 const filteredHistory = computed(() => {
-  const list = store.todayHistory
-  if (!filterQuery.value) return list
+  let list = store.todayHistory
 
-  const q = filterQuery.value.toLowerCase()
-  return list.filter(item => 
-    item.residentName.toLowerCase().includes(q) ||
-    item.medicationName.toLowerCase().includes(q) ||
-    item.caregiverName.toLowerCase().includes(q) ||
-    (item.residentRoom && item.residentRoom.toLowerCase().includes(q))
-  )
+  // Filtro por idoso selecionado
+  if (selectedResidentFilter.value) {
+    list = list.filter(item => item.residentId === selectedResidentFilter.value)
+  }
+
+  // Filtro por turno / período
+  if (selectedShiftFilter.value !== 'all') {
+    list = list.filter(item => {
+      if (!item.administeredAt) return true
+      const date = new Date(item.administeredAt)
+      const hours = date.getHours()
+      if (selectedShiftFilter.value === 'morning') return hours >= 6 && hours < 12
+      if (selectedShiftFilter.value === 'afternoon') return hours >= 12 && hours < 18
+      if (selectedShiftFilter.value === 'night') return hours >= 18 || hours < 6
+      return true
+    })
+  }
+
+  // Filtro por texto livre
+  if (filterQuery.value) {
+    const q = filterQuery.value.toLowerCase()
+    list = list.filter(item => 
+      item.residentName.toLowerCase().includes(q) ||
+      item.medicationName.toLowerCase().includes(q) ||
+      item.caregiverName.toLowerCase().includes(q) ||
+      (item.residentRoom && item.residentRoom.toLowerCase().includes(q))
+    )
+  }
+
+  return list
+})
+
+const clearAllFilters = () => {
+  filterQuery.value = ''
+  selectedResidentFilter.value = ''
+  selectedShiftFilter.value = 'all'
+}
+
+const hasActiveFilters = computed(() => {
+  return filterQuery.value !== '' || selectedResidentFilter.value !== '' || selectedShiftFilter.value !== 'all'
 })
 
 const formatTimeOnly = (isoString) => {
@@ -62,23 +96,83 @@ const handleUndo = (item) => {
     </div>
 
     <!-- Barra de Filtro Minimalista -->
-    <div class="relative">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-        <Search class="w-3.5 h-3.5" />
+    <div class="space-y-2">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <Search class="w-3.5 h-3.5" />
+        </div>
+        <input
+          type="text"
+          v-model="filterQuery"
+          placeholder="Filtrar por idoso, remédio ou cuidadora..."
+          class="w-full pl-8.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 shadow-2xs"
+        />
+        <button
+          v-if="filterQuery"
+          @click="filterQuery = ''"
+          class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+        >
+          <X class="w-3.5 h-3.5" />
+        </button>
       </div>
-      <input
-        type="text"
-        v-model="filterQuery"
-        placeholder="Filtrar por idoso, remédio ou cuidadora..."
-        class="w-full pl-8.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 shadow-2xs"
-      />
-      <button
-        v-if="filterQuery"
-        @click="filterQuery = ''"
-        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-      >
-        <X class="w-3.5 h-3.5" />
-      </button>
+
+      <!-- Filtros Rápidos por Turno e Idoso -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+        <button
+          type="button"
+          @click="selectedShiftFilter = 'all'"
+          :class="selectedShiftFilter === 'all' ? 'bg-navy-800 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+        >
+          Todos os Turnos
+        </button>
+        <button
+          type="button"
+          @click="selectedShiftFilter = 'morning'"
+          :class="selectedShiftFilter === 'morning' ? 'bg-navy-800 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+        >
+          🌅 Manhã (06h-12h)
+        </button>
+        <button
+          type="button"
+          @click="selectedShiftFilter = 'afternoon'"
+          :class="selectedShiftFilter === 'afternoon' ? 'bg-navy-800 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+        >
+          ☀️ Tarde (12h-18h)
+        </button>
+        <button
+          type="button"
+          @click="selectedShiftFilter = 'night'"
+          :class="selectedShiftFilter === 'night' ? 'bg-navy-800 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+        >
+          🌙 Noite (18h-06h)
+        </button>
+      </div>
+
+      <!-- Seletor de Idoso e Limpar Filtros -->
+      <div class="flex items-center gap-2">
+        <select
+          v-model="selectedResidentFilter"
+          class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400"
+        >
+          <option value="">Todos os Residentes ({{ store.residents.length }})</option>
+          <option v-for="res in store.residents" :key="res.id" :value="res.id">
+            {{ res.name }} {{ res.room ? `(${res.room})` : '' }}
+          </option>
+        </select>
+
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          @click="clearAllFilters"
+          class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs flex-shrink-0 transition-colors font-medium"
+        >
+          Limpar
+        </button>
+      </div>
     </div>
 
     <!-- Lista de Registros Auditáveis -->
