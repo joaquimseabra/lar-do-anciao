@@ -58,7 +58,7 @@
 
 As pendências restantes estão divididas em **Nuvem (Firebase)** e **Publicação Mobile (Android)**:
 
-### ☁️ ÉPICO 1: Autenticação Real em Nuvem (Firebase Authentication)
+### ☁️ 1. Autenticação Real em Nuvem (Firebase Authentication)
 *Objetivo: Substituir as contas mockadas por contas reais com senha criptografada na nuvem.*
 
 - [ ] **1.1. Ativação no Firebase Console:**
@@ -76,7 +76,7 @@ As pendências restantes estão divididas em **Nuvem (Firebase)** e **Publicaç�
 
 ---
 
-### 🌐 ÉPICO 2: Banco de Dados em Tempo Real (Cloud Firestore)
+### 🌐 2. Banco de Dados em Tempo Real (Cloud Firestore)
 *Objetivo: Evitar dose dupla garantindo que, quando uma cuidadora confirmar um remédio no celular dela, o card suma no mesmo segundo dos aparelhos das demais cuidadoras.*
 
 - [ ] **2.1. Conexão do Firestore:**
@@ -94,7 +94,7 @@ As pendências restantes estão divididas em **Nuvem (Firebase)** e **Publicaç�
 
 ---
 
-### 🖼️ ÉPICO 3: Fotos na Nuvem (Firebase Storage)
+### 🖼️ 3. Fotos na Nuvem (Firebase Storage)
 *Objetivo: Salvar as fotos de embalagens e idosos na nuvem para que fiquem visíveis em todos os aparelhos.*
 
 - [ ] **3.1. Ativação do Storage:**
@@ -106,7 +106,7 @@ As pendências restantes estão divididas em **Nuvem (Firebase)** e **Publicaç�
 
 ---
 
-### 📱 ÉPICO 4: Publicação Nativa Android (Capacitor & Play Store)
+### 📱 4. Publicação Nativa Android (Capacitor & Play Store)
 *Objetivo: Gerar o aplicativo instalável (.apk / .aab) para a Google Play Store.*
 
 - [ ] **4.1. Adicionar o Projeto Nativo:**
