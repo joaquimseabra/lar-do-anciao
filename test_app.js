@@ -1,4 +1,15 @@
 import { DOSAGE_REGEX } from './src/services/ocrService.js'
+import { 
+  getTodayDateStr, 
+  getYesterdayDateStr, 
+  getNowLocalDateTimeStr, 
+  isTodayAdministration, 
+  isYesterdayAdministration,
+  useMedicationStore 
+} from './src/stores/medicationStore.js'
+import { createPinia, setActivePinia } from 'pinia'
+import { useAuthStore } from './src/stores/authStore.js'
+import { getDemoUserByCaregiverId } from './src/services/authService.js'
 
 let totalTests = 0
 let passedTests = 0
@@ -41,7 +52,6 @@ USO ORAL - ADULTO
 CONTÉM 30 COMPRIMIDOS
 `
 
-// Test extraction manually using same logic
 const NOISE_WORDS = [
   'medicamento', 'genérico', 'lei', 'venda', 'sob', 'prescrição', 'médica',
   'uso', 'oral', 'adulto', 'pediátrico', 'comprimidos', 'cápsulas', 'gotas',
@@ -71,21 +81,21 @@ const extractedName = extractName(sampleBoxText)
 assert(extractedName === 'Losartana Potássica', `Nome do remédio extraído corretamente: "${extractedName}"`)
 
 console.log('\n--- 3. TESTE DOS HELPERS DE DATA ---')
-import { getTodayDateStr, getNowLocalDateTimeStr, isTodayAdministration, useMedicationStore } from './src/stores/medicationStore.js'
-import { createPinia, setActivePinia } from 'pinia'
-
 const today = getTodayDateStr()
+const yesterday = getYesterdayDateStr()
 const nowDt = getNowLocalDateTimeStr()
 assert(typeof today === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(today), `getTodayDateStr retorna formato YYYY-MM-DD (${today})`)
+assert(typeof yesterday === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(yesterday), `getYesterdayDateStr retorna formato YYYY-MM-DD (${yesterday})`)
 assert(typeof nowDt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(nowDt), `getNowLocalDateTimeStr retorna formato ISO local (${nowDt})`)
 assert(isTodayAdministration(nowDt) === true, `isTodayAdministration reconhece data atual como verdadeira`)
+assert(isYesterdayAdministration(`${yesterday}T12:00:00`) === true, `isYesterdayAdministration reconhece data de ontem como verdadeira`)
 assert(isTodayAdministration('2020-01-01T08:00:00') === false, `isTodayAdministration rejeita data antiga de 2020`)
 
 console.log('\n--- 4. TESTES DO ESTADO REATIVO (PINIA STORE) ---')
 // Configurar Pinia no ambiente Node
 setActivePinia(createPinia())
 
-// Mock do localStorage para ambiente Node se não estiver presente
+// Mock do localStorage para ambiente Node
 if (typeof localStorage === 'undefined') {
   global.localStorage = {
     _data: {},
@@ -95,11 +105,14 @@ if (typeof localStorage === 'undefined') {
     clear() { this._data = {} }
   }
 }
+localStorage.clear()
 
 const store = useMedicationStore()
 
 assert(store.residents.length === 5, `Store inicializa com 5 residentes cadastrados`)
-assert(store.medications.length === 6, `Store inicializa com 6 medicamentos prescritos`)
+assert(store.residents[0].room !== undefined, `Residentes possuem campo de quarto/leito: "${store.residents[0].room}"`)
+assert(Array.isArray(store.residents[0].healthConditions), `Residentes possuem condições de saúde/alergias cadastradas`)
+assert(store.medications.length >= 7, `Store possui ao menos 7 medicamentos cadastrados (incluindo horário noturno)`)
 
 const initialDelayedCount = store.delayedMedications.length
 const initialUpcomingCount = store.upcomingMedications.length
@@ -107,7 +120,7 @@ const initialHistoryCount = store.todayHistory.length
 
 console.log(`Estado inicial: Atrasados=${initialDelayedCount}, Próximos=${initialUpcomingCount}, Histórico Hoje=${initialHistoryCount}`)
 assert(initialDelayedCount > 0, `Existe ao menos 1 medicamento com horário atrasado para o alerta visual`)
-assert(initialUpcomingCount > 0, `Existe ao menos 1 próximo medicamento agendado`)
+assert(initialUpcomingCount > 0, `Existe ao menos 1 próximo medicamento agendado (cobertura para qualquer horário)`)
 
 // Testar confirmação de medicamento (1 toque)
 const targetSlot = store.delayedMedications[0]
@@ -115,18 +128,33 @@ const targetResidentName = targetSlot.residentName
 const targetMedName = targetSlot.medicationName
 console.log(`Confirmando remédio: ${targetMedName} para ${targetResidentName} (${targetSlot.scheduledTime})...`)
 
-await store.confirmMedication(targetSlot)
+const adminRecord = await store.confirmMedication(targetSlot)
 
 assert(store.delayedMedications.length === initialDelayedCount - 1, `Remédio confirmado foi removido da lista de pendências atrasadas`)
 assert(store.todayHistory.length === initialHistoryCount + 1, `Remédio confirmado foi adicionado ao Histórico auditável`)
 assert(store.todayHistory[0].medicationName === targetMedName, `Histórico registra o nome correto do remédio (${targetMedName})`)
 assert(store.todayHistory[0].caregiverName === store.currentCaregiver.name, `Histórico registra o nome da cuidadora logada (${store.currentCaregiver.name})`)
 
-// Testar cadastro de novo idoso
+// Testar desfeita de administração (Undo)
+console.log(`Desfazendo confirmação da dose ${adminRecord.id}...`)
+const undone = store.undoAdministration(adminRecord.id)
+assert(undone !== null, `Ação de desfazer dose executada com sucesso`)
+assert(store.delayedMedications.length === initialDelayedCount, `Remédio desfeito retornou para a lista de pendências do painel`)
+
+// Testar cadastro completo de novo idoso
 const newRes = await store.addResident({
-  name: 'Sebastião Valério'
+  name: 'Sebastião Valério',
+  room: 'Quarto 106 - Leito A',
+  age: 82,
+  healthConditions: ['Hipertensão', 'Alergia a Penicilina'],
+  notes: 'Necessita cadeira de rodas para locomoção externa'
 })
-assert(store.residents.some(r => r.name === 'Sebastião Valério'), `Novo idoso residente cadastrado com sucesso`)
+assert(store.residents.some(r => r.name === 'Sebastião Valério' && r.room === 'Quarto 106 - Leito A'), `Novo idoso residente cadastrado com quarto e restrições`)
+
+// Testar edição de residente
+await store.updateResident(newRes.id, { room: 'Quarto 106 - Leito B' })
+const updatedRes = store.residents.find(r => r.id === newRes.id)
+assert(updatedRes.room === 'Quarto 106 - Leito B', `Dados do residente atualizados com sucesso (Quarto alterado para 106 - Leito B)`)
 
 // Testar cadastro de novo medicamento com OCR simulado
 const newMed = await store.addMedication({
@@ -136,11 +164,32 @@ const newMed = await store.addMedication({
   schedules: ['09:00', '21:00'],
   instructions: 'Tomar 1 hora antes das refeições'
 })
-assert(store.medications.some(m => m.name === 'Captopril' && m.dosage === '25mg'), `Novo medicamento cadastrado com sucesso`)
+assert(store.medications.some(m => m.name === 'Captopril' && m.dosage === '25mg'), `Novo medicamento prescrito cadastrado com sucesso`)
 
-// Testar troca de cuidadora
-store.setCurrentCaregiver({ id: 'cg-2', name: 'Joana Santos', role: 'Cuidadora da Tarde' })
-assert(store.currentCaregiver.name === 'Joana Santos', `Perfil ativo alterado para Joana Santos`)
+// Testar atualização de medicamento
+await store.updateMedication(newMed.id, { dosage: '50mg' })
+const updatedMed = store.medications.find(m => m.id === newMed.id)
+assert(updatedMed.dosage === '50mg', `Dosagem de medicamento prescrito atualizada para 50mg`)
+
+// Testar exclusão de medicamento
+await store.deleteMedication(newMed.id)
+assert(!store.medications.some(m => m.id === newMed.id), `Medicamento suspenso/removido do sistema com sucesso`)
+
+// Testar histórico por períodos
+const todayHist = store.historyByPeriod('today')
+const allHist = store.historyByPeriod('all')
+assert(todayHist.length >= 2, `Histórico de hoje retorna doses do dia atual`)
+assert(allHist.length >= todayHist.length, `Histórico de todo o período retorna registros consolidados`)
+
+console.log('\n--- 5. TESTES DE AUTENTICAÇÃO E CONTROLE DE ACESSO (RBAC) ---')
+const authStore = useAuthStore()
+// Teste de usuário cuidador padrão
+authStore.switchCaregiver('cg-1') // Maria Oliveira (Cuidadora)
+assert(authStore.isAdmin === false, `Cuidadora Maria Oliveira possui papel não-administrador (isAdmin = false)`)
+
+// Teste de usuário administrador
+authStore.switchCaregiver('cg-4') // Dra. Beatriz Lins (Admin)
+assert(authStore.isAdmin === true, `Dra. Beatriz Lins possui papel de administrador (isAdmin = true)`)
 
 console.log(`\n========================================`)
 console.log(`RESULTADO: ${passedTests} de ${totalTests} testes passaram com sucesso!`)

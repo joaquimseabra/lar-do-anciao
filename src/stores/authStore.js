@@ -28,6 +28,19 @@ export const useAuthStore = defineStore('authStore', {
 
     sendPasswordReset(email) {
       return authService.sendPasswordReset(email)
+    },
+
+    switchCaregiver(caregiverId) {
+      const demoUser = authService.getDemoUserByCaregiverId(caregiverId)
+      if (demoUser) {
+        this.user = demoUser
+        try {
+          const storage = localStorage.getItem('lar_do_anciao_session') ? localStorage : sessionStorage
+          storage.setItem('lar_do_anciao_session', JSON.stringify(demoUser))
+        } catch (e) {
+          // Ignorar se storage não disponível
+        }
+      }
     }
   }
 })

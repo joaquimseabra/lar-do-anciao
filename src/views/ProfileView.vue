@@ -30,6 +30,7 @@ const handleLogout = async () => {
 
 const handleCaregiverChange = (caregiver) => {
   store.setCurrentCaregiver(caregiver)
+  auth.switchCaregiver(caregiver.id)
 }
 
 const handleResetDemo = () => {

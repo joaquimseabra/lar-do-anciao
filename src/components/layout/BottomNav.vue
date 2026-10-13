@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMedicationStore } from '@/stores/medicationStore'
+import { useAuthStore } from '@/stores/authStore'
 import { 
   LayoutDashboard, 
   Users, 
@@ -12,11 +13,12 @@ import {
 
 const route = useRoute()
 const store = useMedicationStore()
+const auth = useAuthStore()
 
 const tabs = [
   { name: 'Início', path: '/', icon: LayoutDashboard, badge: 'delayed' },
   { name: 'Idosos', path: '/residents', icon: Users },
-  { name: 'Medicamentos', path: '/add-medication', icon: Pill, isHighlight: true },
+  { name: 'Medicamentos', path: '/add-medication', icon: Pill, role: 'admin' },
   { name: 'Histórico', path: '/history', icon: History },
   { name: 'Perfil', path: '/profile', icon: UserCircle }
 ]
@@ -52,6 +54,14 @@ const delayedCount = computed(() => store.delayedMedications.length)
             class="absolute -top-1 -right-1.5 w-3.5 h-3.5 bg-red-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white"
           >
             {{ delayedCount }}
+          </span>
+
+          <!-- Tag ADM para a aba restrita a Administrador quando for cuidador -->
+          <span
+            v-if="tab.role === 'admin' && !auth.isAdmin"
+            class="absolute -top-1.5 -right-2 px-1 py-0.2 bg-slate-100 text-slate-500 text-[8px] font-bold rounded border border-slate-300"
+          >
+            ADM
           </span>
         </div>
 

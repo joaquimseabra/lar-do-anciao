@@ -10,7 +10,8 @@ import {
   Calendar, 
   X, 
   Pill,
-  ShieldCheck
+  ShieldCheck,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const store = useMedicationStore()
@@ -24,7 +25,8 @@ const filteredHistory = computed(() => {
   return list.filter(item => 
     item.residentName.toLowerCase().includes(q) ||
     item.medicationName.toLowerCase().includes(q) ||
-    item.caregiverName.toLowerCase().includes(q)
+    item.caregiverName.toLowerCase().includes(q) ||
+    (item.residentRoom && item.residentRoom.toLowerCase().includes(q))
   )
 })
 
@@ -35,6 +37,12 @@ const formatTimeOnly = (isoString) => {
     return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   } catch (e) {
     return isoString
+  }
+}
+
+const handleUndo = (item) => {
+  if (confirm(`Deseja desfazer a administração de ${item.medicationName} para ${item.residentName}? O remédio voltará à lista de pendências.`)) {
+    store.undoAdministration(item.id)
   }
 }
 </script>
@@ -91,6 +99,9 @@ const formatTimeOnly = (isoString) => {
             <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">
               {{ item.residentName }}
             </h4>
+            <p class="text-[11px] text-slate-400 truncate" v-if="item.residentRoom">
+              {{ item.residentRoom }}
+            </p>
             <p class="text-xs text-slate-700 truncate">
               {{ item.medicationName }} <span class="font-bold text-slate-500">({{ item.dosage }})</span>
             </p>
@@ -100,10 +111,20 @@ const formatTimeOnly = (isoString) => {
           </div>
         </div>
 
-        <!-- Selo Tomado -->
-        <span class="flex-shrink-0 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-          ✓ Tomado
-        </span>
+        <!-- Ação / Selo Tomado -->
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            type="button"
+            @click="handleUndo(item)"
+            class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Desfazer dose confirmada"
+          >
+            <RotateCcw class="w-3.5 h-3.5" />
+          </button>
+          <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+            ✓ Tomado
+          </span>
+        </div>
       </div>
     </div>
 

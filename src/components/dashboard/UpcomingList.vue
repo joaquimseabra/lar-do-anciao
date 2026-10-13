@@ -44,10 +44,38 @@ const handleConfirm = async (slot) => {
       </span>
     </div>
 
+    <!-- Chips de Filtro por Horário (quando houver múltiplos horários) -->
+    <div v-if="availableTimes.length > 1" class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+      <button
+        type="button"
+        @click="selectedTimeFilter = 'all'"
+        class="text-[11px] font-semibold px-2.5 py-1 rounded-xl transition-colors shrink-0"
+        :class="selectedTimeFilter === 'all' 
+          ? 'bg-slate-900 text-white shadow-2xs' 
+          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+      >
+        Todos
+      </button>
+
+      <button
+        v-for="time in availableTimes"
+        :key="time"
+        type="button"
+        @click="selectedTimeFilter = time"
+        class="text-[11px] font-semibold px-2.5 py-1 rounded-xl transition-colors shrink-0 flex items-center gap-1"
+        :class="selectedTimeFilter === time 
+          ? 'bg-slate-900 text-white shadow-2xs' 
+          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'"
+      >
+        <Clock class="w-3 h-3 text-amber-500" />
+        <span>{{ time }}</span>
+      </button>
+    </div>
+
     <!-- Lista com Próximos Remédios -->
-    <div v-if="store.upcomingMedications.length > 0" class="space-y-2.5">
+    <div v-if="filteredList.length > 0" class="space-y-2.5">
       <div
-        v-for="item in store.upcomingMedications"
+        v-for="item in filteredList"
         :key="item.slotId"
         class="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs"
       >
@@ -62,6 +90,9 @@ const handleConfirm = async (slot) => {
             <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">
               {{ item.residentName }}
             </h4>
+            <p class="text-[11px] text-slate-400 truncate" v-if="item.residentRoom">
+              {{ item.residentRoom }}
+            </p>
             <p class="text-xs font-semibold text-slate-700 truncate">
               {{ item.medicationName }} <span class="font-bold text-slate-500">({{ item.dosage }})</span>
             </p>
@@ -90,7 +121,7 @@ const handleConfirm = async (slot) => {
       v-else
       class="bg-white border border-slate-200/80 rounded-2xl p-4 text-center text-xs text-slate-500"
     >
-      Nenhum próximo medicamento pendente.
+      Nenhum próximo medicamento pendente{{ selectedTimeFilter !== 'all' ? ` para o horário ${selectedTimeFilter}` : '' }}.
     </div>
   </section>
 </template>

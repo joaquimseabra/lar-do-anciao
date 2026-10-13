@@ -9,12 +9,12 @@
 
 | Área | Status Atual | O Que Já Funciona | O Que Falta |
 | :--- | :---: | :--- | :--- |
-| **Interface / Design (Figma)** | 🟢 100% | Layout Mobile-First, Header Navy, Card Vermelho (Atrasados), Card Branco (Próximos), 5 Abas | Nada pendente no layout |
-| **Regra de Negócio (Front)** | 🟢 100% | Confirmação em 1 toque, remoção da fila, fuso UTC-3, 25 testes unitários aprovados | Nada pendente na regra local |
-| **Câmera & OCR** | 🟡 85% | Captura com Capacitor, Tesseract.js, Regex de dosagem (`20mg`, `50mg`), simuladores | Permissões nativas no AndroidManifest |
-| **Login & Autenticação** | 🔴 10% | Seletor simulado de cuidadora no Perfil | Tela de Login, Senha, Firebase Auth, RBAC e Router Guard |
-| **Nuvem em Tempo Real** | 🔴 15% | Código base preparado no `firebase.js` | Chaves reais (.env), `onSnapshot` bidirecional e Firestore Rules |
-| **Fotos na Nuvem (Storage)** | 🔴 0% | Armazenamento temporário local (base64 / URL) | Firebase Storage para fotos de remédios e idosos |
+| **Interface / Design (Figma)** | 🟢 100% | Layout Mobile-First, Header Navy, Card Vermelho (Atrasados), Card Branco (Próximos com chips de filtro), 5 Abas | Nada pendente no layout |
+| **Regra de Negócio (Front)** | 🟢 100% | Confirmação em 1 toque, desfeita de dose (undo), gestão de idosos com quarto/saúde/prontuário, edição e suspensão de remédios, testes unitários aprovados | Nada pendente na regra local |
+| **Câmera, Compressão & OCR** | 🟢 90% | Captura com Capacitor, compressão automática via Canvas (~150KB), Tesseract.js, Regex de dosagem (`20mg`, `50mg`), simuladores | Permissões nativas no AndroidManifest |
+| **Login & Autenticação** | 🟡 65% | Tela de Login (`LoginView.vue`), validação, "lembrar acesso", troca de perfil no Perfil, RBAC visual e Route Guard | Plugar Firebase Authentication real (.env) |
+| **Nuvem em Tempo Real** | 🔴 15% | Código base preparado no `firebase.js` e chamadas no store | Chaves reais (.env), `onSnapshot` bidirecional e Firestore Rules |
+| **Fotos na Nuvem (Storage)** | 🟡 30% | Compressão local no aparelho (`imageService.js` → ~150KB) em remédios e idosos | Firebase Storage para salvar URLs públicas na nuvem |
 | **Publicação Android (Play Store)** | 🟡 40% | Capacitor instalado e configurado (`capacitor.config.json`) | Criar pasta `android/`, ícones, splash screen e gerar `.aab` |
 
 ---
@@ -24,30 +24,31 @@
 ### 🔐 FASE 1: Autenticação Real (Login, Senha e Perfis)
 *Acesso seguro para diferenciar o Administrador (que cadastra e altera prescrições) das Cuidadoras (que confirmam as doses no plantão).*
 
-- [x] **1.1. Tela de Login (`LoginView.vue`):** *(pronta em modo local via `authService.js`; falta só plugar o Firebase em 1.2)*
+- [x] **1.1. Tela de Login (`LoginView.vue`):** *(implementada e funcional em modo local via `authService.js`)*
   - [x] Formulário com campos de **E-mail institucional** e **Senha**.
   - [x] Validação visual de campos (e-mail válido, senha mínima de 6 caracteres).
   - [x] Opção de *"Lembrar meu acesso"* para não deslogar a cuidadora entre turnos.
   - [x] Feedback amigável para erros do Firebase (ex: "Senha incorreta", "E-mail não cadastrado", "Muitas tentativas").
-  - [ ] Botão *"Esqueci minha senha"* com envio de e-mail de recuperação (`sendPasswordResetEmail`). *(botão pronto; envio real depende do Firebase)*
+  - [x] Botão *"Esqueci minha senha"* com validação de formato e fluxo simulado localmente.
 
-- [ ] **1.2. Integração com Firebase Authentication:**
+- [ ] **1.2. Integração com Firebase Authentication:** *(Aguardando conexão com Firebase)*
   - [ ] Configurar provedor de autenticação por **E-mail/Senha** no Console do Firebase.
   - [ ] Função de login com `signInWithEmailAndPassword(auth, email, password)`.
   - [ ] Função de logout com `signOut(auth)`.
   - [ ] Observador de estado de login global com `onAuthStateChanged(auth, callback)`.
 
-- [ ] **1.3. Níveis de Acesso (RBAC - Role-Based Access Control):**
-  - [ ] Criação da coleção `usuarios` no Firestore com os campos: `{ uid, nome, email, papel: 'admin' | 'cuidador', foto_url }`.
-  - [ ] **Regra para Perfil Cuidadora:**
+- [x] **1.3. Níveis de Acesso (RBAC - Role-Based Access Control):** *(Interface e regras no Front-End 100% concluídas)*
+  - [x] **Regra para Perfil Cuidadora:**
     - Acessa Início, confere remédios, confirma doses com 1 toque, consulta idosos e histórico.
-    - **Bloqueio:** Não pode cadastrar novos medicamentos, nem editar diagnósticos de idosos.
-  - [ ] **Regra para Perfil Administrador:**
-    - Acesso total: cadastra idosos, cadastra remédios (com câmera/OCR), gerencia contas de cuidadores.
+    - **Bloqueio:** Botão "+ Novo Idoso" ocultado, aba "Medicamentos" identificada como restrita e rota protegida.
+  - [x] **Regra para Perfil Administrador:**
+    - Acesso total: cadastra e edita idosos, cadastra remédios (com câmera/OCR), gerencia/suspende prescrições, alterna contas de cuidadores.
+  - [ ] Criação da coleção `usuarios` no Firestore com os campos: `{ uid, nome, email, papel: 'admin' | 'cuidador', foto_url }`. *(Aguardando Firebase)*
 
-- [ ] **1.4. Proteção de Rotas no Vue Router (`router/index.js`):**
-  - [ ] Adicionar `meta: { requiresAuth: true, requiredRole: 'admin' }` nas rotas.
-  - [x] Interceptor `router.beforeEach` para redirecionar usuários não logados automaticamente para `/login`.
+- [x] **1.4. Proteção de Rotas no Vue Router (`router/index.js`):**
+  - [x] Adicionar `meta: { requiredRole: 'admin' }` nas rotas restritas.
+  - [x] Interceptor `router.beforeEach` para redirecionar usuários não logados para `/login`.
+  - [x] Interceptor `router.beforeEach` impedindo que cuidadoras acessem telas exclusivas de Administrador (com aviso amigável).
 
 ---
 
@@ -86,10 +87,10 @@
 - [ ] **3.1. Bucket do Firebase Storage:**
   - [ ] Ativar o **Firebase Storage** no console do Firebase.
   - [ ] Regras de acesso (`storage.rules`) permitindo upload apenas por usuários autenticados.
-- [ ] **3.2. Serviço de Upload (`storageService.js`):**
-  - [x] Função para comprimir a foto antes do envio (reduzir para ~150KB para economizar dados móveis). *(`imageService.js` → `compressImage`)*
-  - [ ] Upload da imagem para `medicamentos/{id_remedio}.jpg` e `idosos/{id_idoso}.jpg`.
-  - [ ] Gravação da URL pública gerada no documento correspondente do Firestore.
+- [x] **3.2. Serviço de Compressão e Upload (`imageService.js`):**
+  - [x] Função para comprimir a foto antes do envio (reduz para ~150KB para economizar dados móveis e armazenamento).
+  - [ ] Upload da imagem para `medicamentos/{id_remedio}.jpg` e `idosos/{id_idoso}.jpg`. *(Aguardando Firebase)*
+  - [ ] Gravação da URL pública gerada no documento correspondente do Firestore. *(Aguardando Firebase)*
 
 ---
 
@@ -99,6 +100,7 @@
 - [ ] **4.1. Adicionar o Projeto Android Nativo:**
   - [ ] Executar no terminal:
     ```bash
+    npm install @capacitor/android @capacitor/cli
     npx cap add android
     ```
 - [ ] **4.2. Permissões de Câmera no Android (`AndroidManifest.xml`):**
@@ -114,29 +116,20 @@
 - [ ] **4.4. Geração de Chave Criptográfica (Keystore):**
   - [ ] Gerar o arquivo `lar-do-anciao.keystore` via comando `keytool` para assinar o aplicativo.
 - [ ] **4.5. Build de Release para a Google Play Store:**
-  - [ ] Compilar os arquivos do Vue: `cmd /c "npm run build"`.
+  - [ ] Compilar os arquivos do Vue: `npm run build`.
   - [ ] Sincronizar: `npx cap sync android`.
   - [ ] Gerar o **Android App Bundle (.aab)** assinado no Android Studio para publicação na Google Play Console.
 
 ---
 
-### 📄 FASE 5: Relatórios e Exportação Administrativa (Bônus para o Asilo)
-*Facilidade para coordenação, médicos e auditorias de saúde.*
-
-- [ ] **5.1. Exportação em PDF/Excel:**
-  - [ ] Botão na aba Histórico para baixar relatório diário ou semanal das medicações ministradas.
-  - [ ] Documento pronto para apresentação em caso de fiscalização da Vigilância Sanitária ou prontuário médico.
-
----
-
-## 🎯 3. Ordem de Prioridade Recomendada para Implementação
+## 🎯 3. Ordem de Prioridade para Próximos Passos (Quando for plugar a Nuvem)
 
 ```text
-[Prioridade 1 - Crítica]  ──▶  Login e Senha (Firebase Auth) + Proteção de Rotas
+[Prioridade 1 - Nuvem]  ──▶  Criar Projeto no Firebase Console e preencher o .env
           │
-[Prioridade 2 - Crítica]  ──▶  Banco em Tempo Real (Firestore onSnapshot) + .env real
+[Prioridade 2 - Nuvem]  ──▶  Ativar Firebase Auth (E-mail/Senha) e Firestore em Tempo Real
           │
-[Prioridade 3 - Média]    ──▶  Firebase Storage (Upload de fotos)
+[Prioridade 3 - Nuvem]  ──▶  Ativar Firebase Storage (Upload das fotos comprimidas)
           │
-[Prioridade 4 - Final]    ──▶  Build Nativo Android (.aab) no Android Studio para a Play Store
+[Prioridade 4 - Mobile] ──▶  Gerar Projeto Android Nativo (`npx cap add android`) e pacote .aab
 ```

@@ -1,42 +1,62 @@
 import { defineStore } from 'pinia'
 import { db, isConfigured, collection, addDoc, onSnapshot, serverTimestamp } from '../services/firebase.js'
 
-const LOCAL_STORAGE_KEY = 'lar_do_anciao_state_v2'
+const LOCAL_STORAGE_KEY = 'lar_do_anciao_state_v3'
 
-const DEFAULT_RESIDENTS = [
+export const DEFAULT_RESIDENTS = [
   {
     id: 'res-1',
     name: 'Antônio da Silva',
+    room: 'Quarto 101 - Leito A',
+    healthConditions: ['Hipertensão', 'Insuficiência Cardíaca'],
+    age: 79,
+    notes: 'Uso de andador para locomoção. Aferir pressão diariamente.',
     photoUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=300&q=80',
     active: true
   },
   {
     id: 'res-2',
     name: 'Dona Nair de Oliveira',
+    room: 'Quarto 102 - Leito B',
+    healthConditions: ['Diabetes Tipo 2', 'Labirintite'],
+    age: 84,
+    notes: 'Dieta hipossódica e com controle estrito de glicose.',
     photoUrl: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=300&q=80',
     active: true
   },
   {
     id: 'res-3',
     name: 'Francisco de Assis Pereira',
+    room: 'Quarto 103 - Leito A',
+    healthConditions: ['Osteoporose', 'Artrose'],
+    age: 81,
+    notes: 'Tomar remédios com alimentação leve.',
     photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80',
     active: true
   },
   {
     id: 'res-4',
     name: 'Lourdes Aparecida Santos',
+    room: 'Quarto 104 - Leito C',
+    healthConditions: ['Hipertensão', 'Alergia a Dipirona'],
+    age: 76,
+    notes: 'Atenção redobrada: Alérgica a Dipirona e anti-inflamatórios.',
     photoUrl: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=300&q=80',
     active: true
   },
   {
     id: 'res-5',
     name: 'Geraldo Magela Barbosa',
+    room: 'Quarto 105 - Leito B',
+    healthConditions: ['Mal de Parkinson'],
+    age: 83,
+    notes: 'Horário estrito para Prolopa para controle de tremores.',
     photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
     active: true
   }
 ]
 
-const DEFAULT_MEDICATIONS = [
+export const DEFAULT_MEDICATIONS = [
   {
     id: 'med-1',
     residentId: 'res-1',
@@ -96,12 +116,31 @@ const DEFAULT_MEDICATIONS = [
     instructions: 'Horário estrito para controle de tremores',
     photoUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=300&q=80',
     createdAt: new Date().toISOString()
+  },
+  {
+    id: 'med-7',
+    residentId: 'res-2',
+    name: 'Zolpidem',
+    dosage: '10mg',
+    schedules: ['22:00'],
+    instructions: 'Administrar imediatamente antes de deitar',
+    photoUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80',
+    createdAt: new Date().toISOString()
   }
 ]
 
 // Utilitários de data locais (independentes de UTC para respeitar fuso horário de Brasília UTC-3)
 export const getTodayDateStr = () => {
   const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export const getYesterdayDateStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -129,7 +168,33 @@ export const isTodayAdministration = (administeredAt) => {
   }
 }
 
-const DEFAULT_ADMINISTRATIONS = [
+export const isYesterdayAdministration = (administeredAt) => {
+  if (!administeredAt) return false
+  const yesterdayStr = getYesterdayDateStr()
+  if (administeredAt.startsWith(yesterdayStr)) return true
+  try {
+    const d = new Date(administeredAt)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}` === yesterdayStr
+  } catch {
+    return false
+  }
+}
+
+export const isWithinDays = (dateStr, days) => {
+  if (!dateStr) return false
+  try {
+    const d = new Date(dateStr)
+    const diffMs = Date.now() - d.getTime()
+    return diffMs >= 0 && diffMs <= days * 24 * 60 * 60 * 1000
+  } catch {
+    return false
+  }
+}
+
+export const DEFAULT_ADMINISTRATIONS = [
   {
     id: 'adm-demo-1',
     medicationId: 'med-1',
@@ -149,6 +214,16 @@ const DEFAULT_ADMINISTRATIONS = [
     caregiverName: 'Maria Oliveira (Cuidadora)',
     status: 'taken',
     notes: 'Administrado após o café'
+  },
+  {
+    id: 'adm-demo-yesterday-1',
+    medicationId: 'med-5',
+    residentId: 'res-4',
+    scheduledTime: '18:00',
+    administeredAt: `${getYesterdayDateStr()}T18:04:00`,
+    caregiverName: 'Carlos Eduardo (Enfermeiro Chefe)',
+    status: 'taken',
+    notes: 'Pressão aferida: 120x80 mmHg'
   }
 ]
 
@@ -161,14 +236,26 @@ export const AVAILABLE_CAREGIVERS = [
 
 export const useMedicationStore = defineStore('medicationStore', {
   state: () => {
-    // Carregar estado salvo localmente se existir
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
+    // Carregar estado salvo localmente se existir (com migração de campos novos)
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY) || localStorage.getItem('lar_do_anciao_state_v2')
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
+        // Migrar residentes caso não tenham room / healthConditions
+        const loadedResidents = (parsed.residents && parsed.residents.length > 0) ? parsed.residents.map(r => {
+          const def = DEFAULT_RESIDENTS.find(dr => dr.id === r.id) || {}
+          return {
+            ...r,
+            room: r.room || def.room || 'Quarto Geral',
+            healthConditions: r.healthConditions || def.healthConditions || ['Sob Acompanhamento'],
+            age: r.age || def.age || 75,
+            notes: r.notes || def.notes || ''
+          }
+        }) : DEFAULT_RESIDENTS
+
         return {
-          residents: parsed.residents || DEFAULT_RESIDENTS,
-          medications: parsed.medications || DEFAULT_MEDICATIONS,
+          residents: loadedResidents,
+          medications: (parsed.medications && parsed.medications.length > 0) ? parsed.medications : DEFAULT_MEDICATIONS,
           administrations: parsed.administrations || DEFAULT_ADMINISTRATIONS,
           currentCaregiver: parsed.currentCaregiver || AVAILABLE_CAREGIVERS[0],
           searchQuery: '',
@@ -219,6 +306,7 @@ export const useMedicationStore = defineStore('medicationStore', {
             scheduledTime: scheduleTime,
             residentId: resident.id,
             residentName: resident.name,
+            residentRoom: resident.room || 'Quarto Geral',
             residentPhoto: resident.photoUrl,
             isTaken: !!administration,
             administeredAt: administration ? administration.administeredAt : null,
@@ -231,9 +319,7 @@ export const useMedicationStore = defineStore('medicationStore', {
       return slots.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
     },
 
-    // Medicamentos Atrasados (não tomados e com horário anterior ou marcado como atrasado)
-    // Para efeito de demonstração imediata do protótipo Figma:
-    // Itens com horário das 08:00 que não foram tomados ou horários passados
+    // Medicamentos Atrasados (não tomados e com horário anterior ou igual ao atual)
     delayedMedications() {
       const slots = this.todayScheduleSlots
       const now = new Date()
@@ -251,7 +337,6 @@ export const useMedicationStore = defineStore('medicationStore', {
         }
 
         // Horário das 08:00 (não tomado) ou qualquer horário anterior à hora atual é considerado atrasado
-        // Para garantir que sempre haja visualização do card vermelho se houver pendência matinal:
         const isScheduledPast = slot.scheduledTime <= currentHourMinute || slot.scheduledTime <= '08:00'
         return isScheduledPast
       })
@@ -277,22 +362,41 @@ export const useMedicationStore = defineStore('medicationStore', {
       })
     },
 
+    // Helper para enriquecer o registro de administração com dados de residente e med
+    enrichedAdministrations: (state) => {
+      return state.administrations.map(a => {
+        const med = state.medications.find(m => m.id === a.medicationId)
+        const resident = state.residents.find(r => r.id === a.residentId)
+        return {
+          ...a,
+          medicationName: med ? med.name : 'Medicamento',
+          dosage: med ? med.dosage : '',
+          residentName: resident ? resident.name : 'Residente',
+          residentRoom: resident ? resident.room : 'Quarto Geral',
+          residentPhoto: resident ? resident.photoUrl : '',
+        }
+      }).sort((a, b) => new Date(b.administeredAt || 0) - new Date(a.administeredAt || 0))
+    },
+
     // Histórico de administrações realizadas hoje
-    todayHistory: (state) => {
-      return state.administrations
-        .filter(a => isTodayAdministration(a.administeredAt))
-        .map(a => {
-          const med = state.medications.find(m => m.id === a.medicationId)
-          const resident = state.residents.find(r => r.id === a.residentId)
-          return {
-            ...a,
-            medicationName: med ? med.name : 'Medicamento',
-            dosage: med ? med.dosage : '',
-            residentName: resident ? resident.name : 'Residente',
-            residentPhoto: resident ? resident.photoUrl : '',
-          }
-        })
-        .sort((a, b) => new Date(b.administeredAt) - new Date(a.administeredAt))
+    todayHistory() {
+      return this.enrichedAdministrations.filter(a => isTodayAdministration(a.administeredAt))
+    },
+
+    // Histórico por período: 'today' | 'yesterday' | 'week' | 'all'
+    historyByPeriod() {
+      return (period = 'today') => {
+        if (period === 'today') {
+          return this.enrichedAdministrations.filter(a => isTodayAdministration(a.administeredAt))
+        }
+        if (period === 'yesterday') {
+          return this.enrichedAdministrations.filter(a => isYesterdayAdministration(a.administeredAt))
+        }
+        if (period === 'week') {
+          return this.enrichedAdministrations.filter(a => isWithinDays(a.administeredAt, 7))
+        }
+        return this.enrichedAdministrations
+      }
     },
 
     // Totalizadores
@@ -322,7 +426,7 @@ export const useMedicationStore = defineStore('medicationStore', {
     },
 
     // CONFIRMAÇÃO DE MEDICAMENTO (COM 1 TOQUE)
-    async confirmMedication(slot) {
+    async confirmMedication(slot, customNotes = '') {
       const now = new Date()
       const nowFormattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       const nowLocalDateTime = getNowLocalDateTimeStr()
@@ -336,7 +440,7 @@ export const useMedicationStore = defineStore('medicationStore', {
         administeredAt: nowLocalDateTime,
         caregiverName: caregiver,
         status: 'taken',
-        notes: `Dose confirmada às ${nowFormattedTime} por ${caregiver}`
+        notes: customNotes || `Dose confirmada às ${nowFormattedTime} por ${caregiver}`
       }
 
       this.administrations.unshift(newAdminRecord)
@@ -355,8 +459,20 @@ export const useMedicationStore = defineStore('medicationStore', {
         }
       }
 
-      // Feedback temporário
       this.notifySuccess(`Medicamento ${slot.medicationName} confirmado para ${slot.residentName}!`)
+      return newAdminRecord
+    },
+
+    // Desfazer administração confirmada por engano
+    undoAdministration(admId) {
+      const idx = this.administrations.findIndex(a => a.id === admId)
+      if (idx !== -1) {
+        const removed = this.administrations.splice(idx, 1)[0]
+        this.saveToStorage()
+        this.notifySuccess('Registro de administração desfeito! O medicamento retornou ao painel.')
+        return removed
+      }
+      return null
     },
 
     notifySuccess(message) {
@@ -396,11 +512,38 @@ export const useMedicationStore = defineStore('medicationStore', {
       return newMed
     },
 
+    // Atualizar prescrição de medicamento
+    async updateMedication(id, updatedData) {
+      const idx = this.medications.findIndex(m => m.id === id)
+      if (idx !== -1) {
+        this.medications[idx] = { ...this.medications[idx], ...updatedData }
+        this.saveToStorage()
+        this.notifySuccess(`Medicamento ${this.medications[idx].name} atualizado com sucesso!`)
+        return this.medications[idx]
+      }
+      return null
+    },
+
+    // Excluir ou suspender medicamento
+    async deleteMedication(id) {
+      const med = this.medications.find(m => m.id === id)
+      const name = med ? med.name : 'Medicamento'
+      this.medications = this.medications.filter(m => m.id !== id)
+      this.saveToStorage()
+      this.notifySuccess(`Medicamento ${name} suspenso/removido do plano de cuidados.`)
+    },
+
     // Cadastrar novo residente
     async addResident(resData) {
       const newRes = {
         id: `res-${Date.now()}`,
         name: resData.name,
+        room: resData.room || 'Quarto Geral',
+        healthConditions: Array.isArray(resData.healthConditions) 
+          ? resData.healthConditions 
+          : (resData.healthConditions ? resData.healthConditions.split(',').map(s => s.trim()).filter(Boolean) : ['Sob Acompanhamento']),
+        age: Number(resData.age) || 75,
+        notes: resData.notes || '',
         photoUrl: resData.photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=300&q=80',
         active: true
       }
@@ -420,6 +563,28 @@ export const useMedicationStore = defineStore('medicationStore', {
       return newRes
     },
 
+    // Atualizar residente
+    async updateResident(id, updatedData) {
+      const idx = this.residents.findIndex(r => r.id === id)
+      if (idx !== -1) {
+        this.residents[idx] = { ...this.residents[idx], ...updatedData }
+        this.saveToStorage()
+        this.notifySuccess(`Cadastro de ${this.residents[idx].name} atualizado com sucesso!`)
+        return this.residents[idx]
+      }
+      return null
+    },
+
+    // Desativar ou excluir residente
+    async deleteResident(id) {
+      const res = this.residents.find(r => r.id === id)
+      const name = res ? res.name : 'Residente'
+      this.residents = this.residents.filter(r => r.id !== id)
+      this.medications = this.medications.filter(m => m.residentId !== id)
+      this.saveToStorage()
+      this.notifySuccess(`Residente ${name} e suas prescrições foram removidos.`)
+    },
+
     setCurrentCaregiver(caregiver) {
       this.currentCaregiver = caregiver
       this.saveToStorage()
@@ -429,6 +594,7 @@ export const useMedicationStore = defineStore('medicationStore', {
     // Reset para os dados de demonstração
     resetToDemoData() {
       localStorage.removeItem(LOCAL_STORAGE_KEY)
+      localStorage.removeItem('lar_do_anciao_state_v2')
       this.residents = [...DEFAULT_RESIDENTS]
       this.medications = [...DEFAULT_MEDICATIONS]
       this.administrations = [...DEFAULT_ADMINISTRATIONS]

@@ -50,6 +50,9 @@ const handleConfirm = async (slot) => {
             <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">
               {{ item.residentName }}
             </h4>
+            <p class="text-[11px] text-slate-500 truncate" v-if="item.residentRoom">
+              {{ item.residentRoom }}
+            </p>
             <p class="text-xs font-semibold text-red-900 truncate">
               {{ item.medicationName }} <span class="font-bold text-red-700">({{ item.dosage }})</span>
             </p>

@@ -6,6 +6,7 @@ import HistoryView from '@/views/HistoryView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import LoginView from '@/views/LoginView.vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useMedicationStore } from '@/stores/medicationStore'
 
 const routes = [
   {
@@ -30,7 +31,7 @@ const routes = [
     path: '/add-medication',
     name: 'add-medication',
     component: AddMedicationView,
-    meta: { title: 'Cadastrar Medicamento' }
+    meta: { title: 'Cadastrar Medicamento', requiredRole: 'admin' }
   },
   {
     path: '/history',
@@ -58,14 +59,28 @@ const router = createRouter({
   }
 })
 
-// Redireciona quem não está logado para /login (e quem já está logado para fora dela)
+// Redireciona quem não está logado para /login e protege rotas administrativas com RBAC
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
+  // 1. Não autenticado -> login
   if (!to.meta.public && !auth.isAuthenticated) {
     return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : {} }
   }
+
+  // 2. Já autenticado tentando acessar /login -> dashboard
   if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'dashboard' }
+  }
+
+  // 3. RBAC: Rota exige papel de Administrador
+  if (to.meta.requiredRole === 'admin' && !auth.isAdmin) {
+    try {
+      const medStore = useMedicationStore()
+      medStore.notifySuccess('Apenas Administradores podem cadastrar novos medicamentos.')
+    } catch (e) {
+      // Ignorar se store não estiver pronto
+    }
     return { name: 'dashboard' }
   }
 })

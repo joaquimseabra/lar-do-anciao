@@ -85,4 +85,11 @@ export const sendPasswordReset = async (email) => {
   if (!DEMO_USERS.some(u => u.email === normalizedEmail)) throw authError('auth/user-not-found')
 }
 
+export const getDemoUserByCaregiverId = (caregiverId) => {
+  const user = DEMO_USERS.find(u => u.caregiverId === caregiverId)
+  return user ? toPublicUser(user) : null
+}
+
 export const DEMO_ACCOUNTS = DEMO_USERS.map(({ email, password, nome, papel }) => ({ email, password, nome, papel }))
+
+
