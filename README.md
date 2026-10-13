@@ -50,6 +50,34 @@ Se você for gerar o aplicativo instalado no celular Android ou enviar para a Go
 
 ---
 
+### ⚡ Instalação Rápida no Windows (copie e cole no terminal)
+
+Com o **winget** (já incluso no Windows 10/11), este comando instala **Node.js LTS** e **Git** de uma vez. Abra o **PowerShell** como usuário comum e cole o bloco abaixo:
+
+```powershell
+winget install --id OpenJS.NodeJS.LTS -e --accept-package-agreements --accept-source-agreements; winget install --id Git.Git -e --accept-package-agreements --accept-source-agreements
+```
+
+Depois da instalação, **feche e abra o terminal novamente** (para o Windows reconhecer os novos comandos) e confira as versões:
+
+```powershell
+node -v; npm -v; git --version
+```
+
+Em seguida, clone e rode o projeto:
+
+```powershell
+git clone https://github.com/joaquimseabra/lar-do-anciao.git; cd lar-do-anciao; npm install; npm run dev
+```
+
+> 📱 **Só para gerar o APK/AAB Android (opcional):** instale o JDK 17 e o Android Studio com o comando abaixo e depois siga a seção [Como Gerar o Aplicativo Android](#-como-gerar-o-aplicativo-android-apk--aab):
+> ```powershell
+> winget install --id EclipseAdoptium.Temurin.17.JDK -e --accept-package-agreements --accept-source-agreements; winget install --id Google.AndroidStudio -e --accept-package-agreements --accept-source-agreements
+> ```
+> O Android Studio instala o Android SDK pelo próprio assistente de primeira execução.
+
+---
+
 ## 🛠️ Stack Tecnológica do Projeto (Instalada via `npm install`)
 
 As dependências abaixo são baixadas automaticamente pelo `npm` a partir do `package.json`:
